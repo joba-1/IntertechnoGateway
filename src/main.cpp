@@ -140,10 +140,10 @@ const char *main_page() {
         "     <div class=\"col-3\" mr-auto></div>\n"
         "     <div class=\"col-2\" mr-auto>%c 1</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-01\">On</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-1-on\">On</button>\n"
         "     </div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-00\">Off</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-1-off\">Off</button>\n"
         "     </div>\n"
         "     <div class=\"col-3\" mr-auto></div>\n"
         "    </div>\n"
@@ -151,10 +151,10 @@ const char *main_page() {
         "     <div class=\"col-3\" mr-auto></div>\n"
         "     <div class=\"col-2\" mr-auto>%c 2</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-11\">On</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-2-on\">On</button>\n"
         "     </div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-10\">Off</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-2-off\">Off</button>\n"
         "     </div>\n"
         "     <div class=\"col-3\" mr-auto></div>\n"
         "    </div>\n"
@@ -162,10 +162,10 @@ const char *main_page() {
         "     <div class=\"col-3\" mr-auto></div>\n"
         "     <div class=\"col-2\" mr-auto>%c 3</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-21\">On</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-3-on\">On</button>\n"
         "     </div>\n"
         "     <div class=\"col-3\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-20\">Off</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-3-off\">Off</button>\n"
         "     </div>\n"
         "     <div class=\"col-3\" mr-auto></div>\n"
         "    </div>\n"
@@ -173,10 +173,10 @@ const char *main_page() {
         "     <div class=\"col-3\" mr-auto></div>\n"
         "     <div class=\"col-2\" mr-auto>%c All</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-x1\">On</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-x-on\">On</button>\n"
         "     </div>\n"
         "     <div class=\"col-3\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-x0\">Off</button>\n"
+        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-x-off\">Off</button>\n"
         "     </div>\n"
         "     <div class=\"col-3\" mr-auto></div>\n"
         "    </div>\n"
@@ -280,31 +280,31 @@ void setup_webserver() {
             bool button = true;
             const char *payload;
             uint8_t addr = app_get_addr() & 0xf0;
-            if (arg.equals("button-00")) {
+            if (arg.equals("button-1-off")) {
                 payload = app_send_to(false, addr);
                 mqtt.publish(MQTT_TOPIC "/change", payload);
             }
-            else if (arg.equals("button-01")) {
+            else if (arg.equals("button-1-on")) {
                 payload = app_send_to(true, addr); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
             }
-            else if (arg.equals("button-10")) {
+            else if (arg.equals("button-2-off")) {
                 payload = app_send_to(false, addr | 1); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
             }
-            else if (arg.equals("button-11")) {
+            else if (arg.equals("button-2-on")) {
                 payload = app_send_to(true, addr | 1); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
             }
-            else if (arg.equals("button-20")) {
+            else if (arg.equals("button-3-off")) {
                 payload = app_send_to(false, addr | 2); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
             }
-            else if (arg.equals("button-21")) {
+            else if (arg.equals("button-3-on")) {
                 payload = app_send_to(true, addr | 2); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
             }
-            else if (arg.equals("button-x0")) {
+            else if (arg.equals("button-x-off")) {
                 payload = app_send_to(false, addr); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
                 payload = app_send_to(false, addr | 1); 
@@ -312,7 +312,7 @@ void setup_webserver() {
                 payload = app_send_to(false, addr | 2); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
             }
-            else if (arg.equals("button-x1")) {
+            else if (arg.equals("button-x-on")) {
                 payload = app_send_to(true, addr); 
                 mqtt.publish(MQTT_TOPIC "/change", payload);
                 payload = app_send_to(true, addr | 1); 
