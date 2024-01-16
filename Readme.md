@@ -2,6 +2,8 @@
 
 Use OOK 443 MHz sender (like FS1000A) to send Intertechno commands initiated by mqtt requests or via web page
 
+![image](https://github.com/joba-1/IntertechnoGateway/assets/32450554/06cb5db0-e65a-42fc-ad5d-504dc0eb79b9)
+
 ## Circuit
 
 | ESP32 | FS1000A |
