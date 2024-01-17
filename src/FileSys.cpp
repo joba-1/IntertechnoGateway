@@ -1,7 +1,7 @@
 #include <FileSys.h>
 
 #ifdef USE_SPIFFS
-    #include <SPIFFS.h>
+    #include <FS.h>
 #else
     #include <LittleFS.h>
 #endif
@@ -22,15 +22,15 @@ bool FileSys::begin( bool formatOnFail ) {
     bool rc = false;
 
 #ifdef USE_SPIFFS
-    if (!SPIFFS.begin(formatOnFail))
+    if (!SPIFFS.begin())
 #else
-    if (!LittleFS.begin(formatOnFail))
+    if (!LittleFS.begin())
 #endif
     {
         Serial.println("Mount failed");
     }
     else {
-        File file = _fs.open("/boot.msg");
+        File file = _fs.open("/boot.msg", "r");
         if (!file) {
             Serial.println("Failed to open /boot.msg for reading");
         }

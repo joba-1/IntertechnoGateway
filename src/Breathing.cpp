@@ -15,16 +15,18 @@ Breathing::Breathing(uint32_t interval_ms, uint8_t pwm_pin, bool inverted, uint8
 }
 
 void Breathing::begin() {
-    #if defined(ESP32)
+    _start = millis();
+    _prev_duty = _inverted ? PWMRANGE : 0;
+    #ifdef ESP32
         ledcAttachPin(_pwm_pin, _pwm_channel);
         ledcSetup(_pwm_channel, PWM_FREQ, PWMBITS);
+        ledcWrite(_pwm_channel, _prev_duty);
     #else
         analogWriteRange(PWMRANGE);
         pinMode(_pwm_pin, OUTPUT);
+        analogWrite(_pwm_pin, _prev_duty);
     #endif
-    _start = millis();
-    _prev_duty = _inverted ? PWMRANGE : 0;
-    ledcWrite(_pwm_channel, _prev_duty);
+    
 }
 
 void Breathing::handle() {

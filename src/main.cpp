@@ -14,14 +14,18 @@ Use builtin led to represent health status
 
 // Web Updater
 #include <ESPAsyncWebServer.h>
+#ifdef ESP32
 #include <WiFi.h>
+#endif
 #include <WiFiClient.h>
 
 // Time sync
 #include <time.h>
 
 // Reset reason
+#ifdef ESP32
 #include "rom/rtc.h"
+#endif
 
 // Health LED
 #include "Breathing.h"
@@ -341,7 +345,7 @@ void setup_webserver() {
     web_server.on("/set", HTTP_POST, [](AsyncWebServerRequest *request) {
         const char *label = NULL;
         const char *name = NULL;
-        for( int i=0; i < request->params(); ++i) {
+        for( size_t i=0; i < request->params(); ++i) {
             // snprintf(web_msg, sizeof(web_msg), "p[%i:%s]=%s", i, request->getParam(i)->name().c_str(), request->getParam(i)->value().c_str());
             // slog(web_msg, LOG_INFO);
             // web_msg[0] = '\0';
@@ -529,14 +533,24 @@ void setup_webserver() {
             Serial.printf("Update Start: %s\n", filename.c_str());
             if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
                 Update.printError(Serial);
-                snprintf(web_msg, sizeof(web_msg), "%s", Update.errorString());
+#ifdef ESP32
+                const char *msg = Update.errorString();
+#else
+                const char *msg = Update.getErrorString().c_str();
+#endif
+                snprintf(web_msg, sizeof(web_msg), "%s", msg);
                 request->redirect("/");  
             }
         }
         if(!Update.hasError()){
             if(Update.write(data, len) != len){
                 Update.printError(Serial);
-                snprintf(web_msg, sizeof(web_msg), "%s", Update.errorString());
+#ifdef ESP32
+                const char *msg = Update.errorString();
+#else
+                const char *msg = Update.getErrorString().c_str();
+#endif
+                snprintf(web_msg, sizeof(web_msg), "%s", msg);
                 request->redirect("/");  
             }
         }
@@ -546,7 +560,12 @@ void setup_webserver() {
                 snprintf(web_msg, sizeof(web_msg), "Update Success: %u Bytes", index+len);
             } else {
                 Update.printError(Serial);
-                snprintf(web_msg, sizeof(web_msg), "%s", Update.errorString());
+#ifdef ESP32
+                const char *msg = Update.errorString();
+#else
+                const char *msg = Update.getErrorString().c_str();
+#endif
+                snprintf(web_msg, sizeof(web_msg), "%s", msg);
             }
             request->redirect("/"); 
         }
@@ -587,6 +606,7 @@ bool check_ntptime() {
 }
 
 
+#ifdef ESP32
 // Reset reason can be quite useful...
 // Messages from arduino core example
 void print_reset_reason(int core) {
@@ -609,6 +629,7 @@ void print_reset_reason(int core) {
     default : slog("Reset reason unknown");
   }
 }
+#endif
 
 
 // Called on incoming mqtt messages
@@ -766,8 +787,10 @@ void setup() {
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);
     mqtt.setCallback(mqtt_callback);
 
+#ifdef ESP32
     print_reset_reason(0);
     print_reset_reason(1);
+#endif
 
     enabledBreathing = app_get_breathe();
     health_led.limits(1, health_led.range() / 2);  // only barely off to 50% brightness
