@@ -16,7 +16,8 @@ Preferences prefs;
 //                                          with device_number=(device_group-1)*4 + device-1
 uint8_t addr = 0;
 bool breathe = true;
-char change[4] = "000";
+char change[4] = "000";  // family, device, on/off like "000" for A1,off and "111" for B2,on
+String names[4][3][2];   // [family][device][key, value] like A1, ...
 
 
 #include <intertechno.h>
@@ -40,9 +41,16 @@ struct it its{
 
 
 void app_setup() {
-    prefs.begin("ITGW", false);
+    prefs.begin("IntertechnoGW", false);
     addr = prefs.getUChar("address", 0);
     breathe = prefs.getBool("breathe", true);
+    for (uint8_t family=0; family<=3; ++family) {
+        for (uint8_t device=0; device<=2; ++device) {
+            char label[3] = { (char)('A' + family), (char)('1' + device), '\0' };
+            names[family][device][0] = label;
+            names[family][device][1] = prefs.getString(label, label);
+        }
+    }
 
     pinMode(its.pin, OUTPUT);
     digitalWrite(its.pin, LOW);
@@ -79,9 +87,40 @@ const char *app_send( bool on )
 
 const char *app_send_to( bool on, uint8_t addr )
 {
+    uint8_t family = addr >> 4;
+    uint8_t device = addr & 0x0f;
+
     rf_tx_cmd(its, addr, on ? INTERTECHNO_CMD_ON : INTERTECHNO_CMD_OFF);
-    change[0] = '0' + (addr >> 4);
-    change[1] = '0' + (addr & 0xf);
+
+    change[0] = '0' + family;
+    change[1] = '0' + device;
     change[2] = on ? '1' : '0';
+
     return change;
+}
+
+
+void app_name( uint8_t addr, const String &name ) {
+    uint8_t family = addr >> 4;
+    uint8_t device = addr & 0x0f;
+
+    if( family > 3 || device > 2 ) {
+        return;
+    }
+
+    char label[3] = { (char)('A' + family), (char)('1' + device), '\0' };
+    prefs.putString(label, name);
+    names[family][device][1] = name;
+}
+
+
+const char *app_get_name( uint8_t addr ) {
+    uint8_t family = addr >> 4;
+    uint8_t device = addr & 0x0f;
+
+    if( family > 3 || device > 2 ) {
+        return "";
+    }
+    
+    return names[family][device][1].c_str();
 }

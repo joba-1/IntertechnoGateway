@@ -118,7 +118,31 @@ char web_msg[80] = "";  // main web page displays and then clears this
 
 // Standard web page
 const char *main_page() {
-    static const char fmt[] =
+    static const char option_fmt[] = "           <option value=\"%s\">%s</option>\n";
+    static const char label_fmt[] = 
+        "       <form action=\"/set\" method=\"post\" enctype=\"multipart/form-data\">\n"
+        "        <div class=\"row my-4\">\n"
+        "         <div class=\"col-1\">\n"
+        "          <label for=\"selectLabel\" class=\"col-form-label\">Label</label>\n"
+        "         </div>\n"
+        "         <div class=\"col-3\">\n"
+        "          <select id=\"selectLabel\" name=\"label\" class=\"form-select\">\n"
+        "%s"
+        "          </select>\n"
+        "         </div>\n"
+        "         <div class=\"col-1\">\n"
+        "          <label for=\"inputName\" class=\"col-form-label\">Name</label>\n"
+        "         </div>\n"
+        "         <div class=\"col-4\">\n"
+        "          <input type=\"text\" id=\"inputName\" name=\"name\" class=\"form-control\">\n"
+        "         </div>\n"
+        "         <div class=\"col-2\">\n"
+        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"name\">Set</button>\n"
+        "         </div>\n"
+        "         <div class=\"col-1\" mr-auto></div>\n"
+        "        </div>\n"
+        "       </form>\n";
+    static const char page_fmt[] =
         "<!doctype html>\n"
         "<html lang=\"en\">\n"
         " <head>\n"
@@ -130,15 +154,15 @@ const char *main_page() {
         " </head>\n"
         " <body>\n"
         "  <div class=\"container\">\n"
-        "   <form action=\"/change\" method=\"post\" enctype=\"multipart/form-data\" id=\"form\">\n"
+        "   <form action=\"/change\" method=\"post\" enctype=\"multipart/form-data\">\n"
         "    <div class=\"row\">\n"
         "     <div class=\"col-12\">\n"
         "      <h1>" PROGNAME " v" VERSION "</h1>\n"
         "     </div>\n"
         "    </div>\n"
         "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
-        "     <div class=\"col-2\" mr-auto>%c 1</div>\n"
+        "     <div class=\"col-2\" mr-auto></div>\n"
+        "     <div class=\"col-3\" mr-auto>%s</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
         "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-1-on\">On</button>\n"
         "     </div>\n"
@@ -148,8 +172,8 @@ const char *main_page() {
         "     <div class=\"col-3\" mr-auto></div>\n"
         "    </div>\n"
         "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
-        "     <div class=\"col-2\" mr-auto>%c 2</div>\n"
+        "     <div class=\"col-2\" mr-auto></div>\n"
+        "     <div class=\"col-3\" mr-auto>%s</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
         "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-2-on\">On</button>\n"
         "     </div>\n"
@@ -159,8 +183,8 @@ const char *main_page() {
         "     <div class=\"col-3\" mr-auto></div>\n"
         "    </div>\n"
         "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
-        "     <div class=\"col-2\" mr-auto>%c 3</div>\n"
+        "     <div class=\"col-2\" mr-auto></div>\n"
+        "     <div class=\"col-3\" mr-auto>%s</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
         "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-3-on\">On</button>\n"
         "     </div>\n"
@@ -170,8 +194,8 @@ const char *main_page() {
         "     <div class=\"col-3\" mr-auto></div>\n"
         "    </div>\n"
         "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
-        "     <div class=\"col-2\" mr-auto>%c All</div>\n"
+        "     <div class=\"col-2\" mr-auto></div>\n"
+        "     <div class=\"col-3\" mr-auto>All %c</div>\n"
         "     <div class=\"col-2\" mr-auto>\n"
         "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-x-on\">On</button>\n"
         "     </div>\n"
@@ -185,12 +209,12 @@ const char *main_page() {
         "    <div class=\"accordion-item\">\n"
         "     <h2 class=\"accordion-header\" id=\"heading1\">\n"
         "      <button class=\"accordion-button\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#infos1\" aria-expanded=\"true\" aria-controls=\"infos1\">\n"
-        "       Infos\n"
+        "       Configuration\n"
         "      </button>\n"
         "     </h2>\n"
         "     <div id=\"infos1\" class=\"accordion-collapse collapse\" aria-labelledby=\"heading1\" data-bs-parent=\"#infos\">\n"
         "      <div class=\"accordion-body\">\n"
-        "       <form action=\"/change\" method=\"post\" enctype=\"multipart/form-data\" id=\"form\">\n"
+        "       <form action=\"/change\" method=\"post\" enctype=\"multipart/form-data\">\n"
         "        <div class=\"row\">\n"
         "         <div class=\"col-3\" mr-auto>Family</div>\n"
         "         <div class=\"col-2\" mr-auto>\n"
@@ -208,6 +232,7 @@ const char *main_page() {
         "         <div class=\"col-1\" mr-auto>\n"
         "        </div>\n"
         "       </form>\n"
+        "%s"
         "       <div class=\"row\">\n"
         "        <div class=\"col\"><label for=\"update\">Post firmware image to</label></div>\n"
         "        <div class=\"col\" id=\"update\"><a href=\"/update\">/update</a></div>\n"
@@ -251,16 +276,41 @@ const char *main_page() {
         "  </div>\n"
         "  <script src=\"jquery.min.js\"></script>\n"
         "  <script src=\"bootstrap.bundle.min.js\"></script>\n"
+        "  <script>\n"
+        "   $.get('get?label=' + $('#selectLabel').val(), function(txt){$('#inputName').val(txt)});\n"
+        "   $('#selectLabel').change(function() {\n"
+        "    $.get('get?label=' + $(this).val(), function(txt){$('#inputName').val(txt)});\n"
+        "   });\n"
+        "  </script>\n"
         " </body>\n"
         "</html>\n";
-    static char page[sizeof(fmt) + 500] = "";
+
+    static char option[sizeof(option_fmt) + 2];
+    static char label[sizeof(label_fmt) + sizeof(option) * 4 * 3];
+    static char page[sizeof(page_fmt) + sizeof(label) + sizeof(web_msg) + 100];
     static char curr_time[30];
-    char family = 'A' + (app_get_addr() >> 4);
+
+    String options;
+    for (uint8_t family=0; family<=3; ++family) {
+        for (uint8_t device=0; device<=2; ++device) {
+            char label[3] = { (char)('A' + family), (char)('1' + device), '\0' };
+            snprintf(option, sizeof(option), option_fmt, label, label);
+            options += option;
+        }
+    }
+    snprintf(label, sizeof(label), label_fmt, options.c_str());
+     
     time_t now;
     time(&now);
     strftime(curr_time, sizeof(curr_time), "%FT%T", localtime(&now));
-    snprintf(page, sizeof(page), fmt, family, family, family, family, start_time, curr_time, web_msg);
+
+    uint8_t family = app_get_addr() >> 4;
+
+    snprintf(page, sizeof(page), page_fmt, app_get_name(family<<4), app_get_name((family<<4) + 1), 
+        app_get_name((family<<4) + 2), 'A' + family, label, start_time, curr_time, web_msg);
+
     *web_msg = '\0';
+
     return page;
 }
 
@@ -270,6 +320,51 @@ void setup_webserver() {
     web_server.serveStatic("/bootstrap.min.css", fileSys, "/bootstrap.min.css").setCacheControl("max-age=600");
     web_server.serveStatic("/bootstrap.bundle.min.js", fileSys, "/bootstrap.bundle.min.js").setCacheControl("max-age=600");
     web_server.serveStatic("/jquery.min.js", fileSys, "/jquery.min.js").setCacheControl("max-age=600");
+
+    // get switch name
+    web_server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
+        const char *name = "";
+        String arg = request->arg("label");
+        // snprintf(web_msg, sizeof(web_msg), "/get?label='%s'", arg.c_str());
+        // slog(web_msg, LOG_INFO);
+        if (arg.length() == 2) {
+            uint8_t family = arg[0] - 'A';
+            uint8_t device = arg[1] - '1';
+            if( family <= 3 && device <= 2 ) {
+                name = app_get_name(family<<4 | device);
+            }
+        }
+        request->send(200, "text/plain", name);
+       });
+
+    // set switch name
+    web_server.on("/set", HTTP_POST, [](AsyncWebServerRequest *request) {
+        const char *label = NULL;
+        const char *name = NULL;
+        for( int i=0; i < request->params(); ++i) {
+            // snprintf(web_msg, sizeof(web_msg), "p[%i:%s]=%s", i, request->getParam(i)->name().c_str(), request->getParam(i)->value().c_str());
+            // slog(web_msg, LOG_INFO);
+            // web_msg[0] = '\0';
+            if (request->getParam(i)->name().equals("label")) {
+                label = request->getParam(i)->value().c_str();
+            } else if (request->getParam(i)->name().equals("name")) {
+                name = request->getParam(i)->value().c_str();
+            }
+        }
+        if (label && name && strlen(label) == 2) {
+            uint8_t family = label[0] - 'A';
+            uint8_t device = label[1] - '1';
+            if( family <= 3 && device <= 2 ) {
+                if( !name[0] ) {
+                    app_name(family<<4 | device, label);
+                }
+                else {
+                    app_name(family<<4 | device, name);
+                }
+            }
+        }
+        request->redirect("/");
+       });
 
     // change switch
     web_server.on("/change", HTTP_POST, [](AsyncWebServerRequest *request) {
