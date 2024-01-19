@@ -1,7 +1,7 @@
 #include <FileSys.h>
 
 #ifdef USE_SPIFFS
-    #include <FS.h>
+    #include <SPIFFS.h>
 #else
     #include <LittleFS.h>
 #endif
