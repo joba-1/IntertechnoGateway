@@ -670,9 +670,12 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
     if (strcasecmp(MQTT_TOPIC "/cmd", topic) == 0) {
         for (auto &cmd: cmds) {
             if (strncasecmp(cmd.name, (char *)payload, length) == 0) {
+                char code[4] ={0};
+                memcpy(code, payload, min(sizeof(code) - 1, length));
                 snprintf(msg, sizeof(msg), "Execute mqtt command '%s'", cmd.name);
                 slog(msg, LOG_INFO);
                 (*cmd.action)();
+                mqtt.publish(MQTT_TOPIC "/change", code);
                 return;
             }
         }
