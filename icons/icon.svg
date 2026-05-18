@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"   stop-color="#8a8d92"/>
+      <stop offset=".35" stop-color="#e6e8ea"/>
+      <stop offset=".7"  stop-color="#b9bcc1"/>
+      <stop offset="1"   stop-color="#7a7d82"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="32" fill="#1a1d22"/>
+  <rect x="62" y="14" width="56" height="152" rx="14" fill="url(#silver)" stroke="#3a3d42" stroke-width="2"/>
+  <circle cx="90" cy="26" r="3.2" fill="#ff3030" stroke="#600" stroke-width="0.8"/>
+  <g fill="#0d0d0d" stroke="#2a2a2a" stroke-width="1">
+    <g transform="translate(90 56) rotate(20)">
+      <path d="M -3 -7 H -16 A 7 7 0 0 0 -16 7 H -3 Z"/>
+      <path d="M  3 -7 H  16 A 7 7 0 0 1  16 7 H  3 Z"/>
+    </g>
+    <g transform="translate(90 86) rotate(20)">
+      <path d="M -3 -7 H -16 A 7 7 0 0 0 -16 7 H -3 Z"/>
+      <path d="M  3 -7 H  16 A 7 7 0 0 1  16 7 H  3 Z"/>
+    </g>
+    <g transform="translate(90 116) rotate(20)">
+      <path d="M -3 -7 H -16 A 7 7 0 0 0 -16 7 H -3 Z"/>
+      <path d="M  3 -7 H  16 A 7 7 0 0 1  16 7 H  3 Z"/>
+    </g>
+  </g>
+</svg>

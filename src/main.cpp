@@ -7,6 +7,7 @@ Use builtin led to represent health status
 #include <Arduino.h>
 
 #include "app.h"
+#include "web_icons.h"
 
 #define HEALTH_LED_INVERTED false
 #define HEALTH_LED_PIN LED_BUILTIN
@@ -152,7 +153,8 @@ const char *main_page() {
         " <head>\n"
         "  <meta charset=\"utf-8\">\n"
         "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-        "  <link href=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAADFBMVEUqYbutnpTMuq/70SQgIef5AAAAVUlEQVQIHWOAAPkvDAyM3+Y7MLA7NV5g4GVqKGCQYWowYTBhapBhMGB04GE4/0X+M8Pxi+6XGS67XzzO8FH+iz/Dl/q/8gx/2S/UM/y/wP6f4T8QAAB3Bx3jhPJqfQAAAABJRU5ErkJggg==\" rel=\"icon\" type=\"image/x-icon\" />\n"
+        "  "
+        ICON_LINKS_HTML
         "  <link href=\"bootstrap.min.css\" rel=\"stylesheet\">\n"
         "  <title>" PROGNAME " v" VERSION "</title>\n"
         " </head>\n"
@@ -448,6 +450,7 @@ void setup_webserver() {
         request->send(200, "text/html",
                         "<html>\n"
                         " <head>\n"
+                        ICON_LINKS_HTML
                         "  <title>" PROGNAME " v" VERSION "</title>\n"
                         "  <meta http-equiv=\"refresh\" content=\"7; url=/\"> \n"
                         " </head>\n"
@@ -477,6 +480,7 @@ void setup_webserver() {
         request->send(200, "text/html",
                         "<html>\n"
                         " <head>\n"
+                        ICON_LINKS_HTML
                         "  <title>" PROGNAME " v" VERSION "</title>\n"
                         "  <meta http-equiv=\"refresh\" content=\"7; url=/\"> \n"
                         " </head>\n"
@@ -494,7 +498,8 @@ void setup_webserver() {
             " <head>\n"
             "  <meta charset=\"utf-8\">\n"
             "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-            "  <link href=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAADFBMVEUqYbutnpTMuq/70SQgIef5AAAAVUlEQVQIHWOAAPkvDAyM3+Y7MLA7NV5g4GVqKGCQYWowYTBhapBhMGB04GE4/0X+M8Pxi+6XGS67XzzO8FH+iz/Dl/q/8gx/2S/UM/y/wP6f4T8QAAB3Bx3jhPJqfQAAAABJRU5ErkJggg==\" rel=\"icon\" type=\"image/x-icon\" />\n"
+            "  "
+            ICON_LINKS_HTML
             "  <link href=\"bootstrap.min.css\" rel=\"stylesheet\">\n"
             "  <title>" PROGNAME " v" VERSION "</title>\n"
             " </head>\n"
