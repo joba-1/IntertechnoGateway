@@ -13,6 +13,11 @@ Use builtin led to represent health status
 #define HEALTH_LED_PIN LED_BUILTIN
 #define HEALTH_LED_CHANNEL 0
 
+// WiFiManager must be included before ESPAsyncWebServer to avoid
+// HTTP_DELETE/GET/... enum conflicts between WebServer.h (pulls in
+// ESP-IDF http_parser.h) and ESPAsyncWebServer's WebRequestMethod enum.
+#include <WiFiManager.h>
+
 // Web Updater
 #include <ESPAsyncWebServer.h>
 #ifdef ESP32
@@ -37,7 +42,6 @@ bool enabledBreathing = true;  // global flag to switch breathing animation on o
 
 // Infrastructure
 #include <Syslog.h>
-#include <WiFiManager.h>
 #include <FileSys.h>
 
 FileSys fileSys;
