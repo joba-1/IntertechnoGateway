@@ -22,6 +22,7 @@ uint8_t addr = 0;
 bool breathe = true;
 char change[4] = "000";  // family, device, on/off like "000" for A1,off and "111" for B2,on
 String names[4][3][2];   // [family][device][key, value] like A1, ...
+bool lights[4][3];       // switch drives a lamp: announced to Home Assistant as light instead of switch
 
 
 #include <intertechno.h>
@@ -53,6 +54,8 @@ void app_setup() {
             char label[3] = { (char)('A' + family), (char)('1' + device), '\0' };
             names[family][device][0] = label;
             names[family][device][1] = prefs.getString(label, label);
+            char light_key[5] = { 'L', '_', label[0], label[1], '\0' };
+            lights[family][device] = prefs.getBool(light_key, false);
         }
     }
 
@@ -221,4 +224,30 @@ const char *app_get_name( uint8_t addr ) {
     }
     
     return names[family][device][1].c_str();
+}
+
+
+void app_light( uint8_t addr, bool is_light ) {
+    uint8_t family = addr >> 4;
+    uint8_t device = addr & 0x0f;
+
+    if( family > 3 || device > 2 ) {
+        return;
+    }
+
+    char light_key[5] = { 'L', '_', (char)('A' + family), (char)('1' + device), '\0' };
+    prefs.putBool(light_key, is_light);
+    lights[family][device] = is_light;
+}
+
+
+bool app_is_light( uint8_t addr ) {
+    uint8_t family = addr >> 4;
+    uint8_t device = addr & 0x0f;
+
+    if( family > 3 || device > 2 ) {
+        return false;
+    }
+
+    return lights[family][device];
 }

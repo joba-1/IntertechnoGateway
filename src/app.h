@@ -13,6 +13,10 @@ bool app_get_breathe();
 void app_name( uint8_t addr, const String &name );
 const char *app_get_name( uint8_t addr );
 
+// switch drives a lamp: Home Assistant gets a light entity instead of a switch
+void app_light( uint8_t addr, bool is_light );
+bool app_is_light( uint8_t addr );
+
 const char *app_send( bool on );
 const char *app_send_to( bool on, uint8_t addr );
 

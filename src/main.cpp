@@ -91,11 +91,13 @@ void publish( const char *topic, const char *payload ) {
 volatile bool discovery_due = true;  // (re)announce the switches to Home Assistant from loop()
 
 // Home Assistant MQTT discovery: one retained config per switch, with the unique_ids of the former YAML entries.
-// No "device" block on purpose: with one, HA prefixes every friendly name with the device name.
+// Each switch is its own device named like the switch, and the entity has no name of its own ("name": null),
+// so it shows the device name. Like that HA drops the area prefix in area views and lists it with the devices.
 void publish_discovery() {
     char topic[48];
     char name[128];
-    char json[640];
+    char json[1024];
+    String url = "http://" + WiFi.localIP().toString() + "/";
 
     for (uint8_t family = 0; family <= 3; family++) {
         for (uint8_t device = 0; device <= 2; device++) {
@@ -113,15 +115,34 @@ void publish_discovery() {
 
             char id = 'a' + family;
             int code_f = family, code_d = device;
-            snprintf(topic, sizeof(topic), "homeassistant/switch/itgw_%c%d/config", id, device + 1);
+            bool is_light = app_is_light(family << 4 | device);
+
+            // a lamp is a light in HA (listed under lighting, name shortened in area views), anything else a switch.
+            // an MQTT light compares the state with payload_on/payload_off, a switch needs state_on/state_off
+            char state_keys[64] = "";
+            if (!is_light) {
+                snprintf(state_keys, sizeof(state_keys), "\"state_on\":\"%d%d1\",\"state_off\":\"%d%d0\",", code_f, code_d, code_f, code_d);
+            }
+            snprintf(topic, sizeof(topic), "homeassistant/%s/itgw_%c%d/config", is_light ? "light" : "switch", id, device + 1);
             snprintf(json, sizeof(json),
-                "{\"name\":\"%s\",\"unique_id\":\"itgw_%c%d\","
+                "{\"name\":null,\"unique_id\":\"itgw_%c%d\","
                 "\"command_topic\":\"" MQTT_TOPIC "/cmd\",\"payload_on\":\"%d%d1\",\"payload_off\":\"%d%d0\","
-                "\"state_topic\":\"" MQTT_TOPIC "/change\",\"state_on\":\"%d%d1\",\"state_off\":\"%d%d0\","
-                "\"availability_topic\":\"" MQTT_TOPIC "/LWT\",\"payload_available\":\"Online\",\"payload_not_available\":\"Offline\"}",
-                name, id, device + 1, code_f, code_d, code_f, code_d, code_f, code_d, code_f, code_d);
+                "\"state_topic\":\"" MQTT_TOPIC "/change\",%s"
+                "\"availability_topic\":\"" MQTT_TOPIC "/LWT\",\"payload_available\":\"Online\",\"payload_not_available\":\"Offline\","
+                "\"device\":{\"identifiers\":[\"itgw_%c%d\"],\"name\":\"%s\",\"manufacturer\":\"Intertechno\","
+                "\"model\":\"433 MHz code wheel receiver %c%d\",\"configuration_url\":\"%s\"}}",
+                id, device + 1, code_f, code_d, code_f, code_d, state_keys,
+                id, device + 1, name, 'A' + family, device + 1, url.c_str());
             if (!mqtt.publish(topic, json, true)) {
                 slog("Home Assistant discovery publish failed", LOG_ERR);
+                return;
+            }
+
+            // only now remove the entity of the other kind (empty retained config), e.g. after the lamp flag changed:
+            // the device keeps a config above, so HA does not delete it and it keeps its area
+            snprintf(topic, sizeof(topic), "homeassistant/%s/itgw_%c%d/config", is_light ? "switch" : "light", id, device + 1);
+            if (!mqtt.publish(topic, "", true)) {
+                slog("Home Assistant discovery cleanup failed", LOG_ERR);
                 return;
             }
         }
@@ -190,10 +211,11 @@ const char *main_page() {
     static const char label_fmt[] = 
         "       <form action=\"/set\" method=\"post\" enctype=\"multipart/form-data\">\n"
         "        <div class=\"input-group\">\n"
-        "         <select id=\"selectLabel\" name=\"label\" class=\"form-select\" style=\"max-width: 6rem\" aria-label=\"Switch\">\n"
+        "         <select id=\"selectLabel\" name=\"label\" class=\"form-select\" aria-label=\"Switch\">\n"
         "%s"
         "         </select>\n"
-        "         <input type=\"text\" id=\"inputName\" name=\"name\" class=\"form-control\" placeholder=\"Name shown on this page\" aria-label=\"Name\">\n"
+        "         <input type=\"text\" id=\"inputName\" name=\"name\" class=\"form-control\" placeholder=\"Name here and in Home Assistant\" aria-label=\"Name\">\n"
+        "         <div class=\"input-group-text\"><input class=\"form-check-input mt-0 me-2\" type=\"checkbox\" id=\"inputLight\" name=\"light\" value=\"1\"><label for=\"inputLight\">Lamp</label></div>\n"
         "         <button class=\"btn btn-primary\" type=\"submit\" name=\"button\" value=\"name\">Set</button>\n"
         "        </div>\n"
         "       </form>\n";
@@ -333,10 +355,13 @@ const char *main_page() {
         "    $.post('change', { button: b.val(), ajax: 1 }).always(poll);\n"
         "   });\n"
         "   poll();\n"
-        "   $.get('get?label=' + $('#selectLabel').val(), function(txt){$('#inputName').val(txt)});\n"
-        "   $('#selectLabel').change(function() {\n"
-        "    $.get('get?label=' + $(this).val(), function(txt){$('#inputName').val(txt)});\n"
-        "   });\n"
+        "   function loadSwitch() {\n"
+        "    var l = $('#selectLabel').val();\n"
+        "    $.get('get?label=' + l, function(txt) { $('#inputName').val(txt); });\n"
+        "    $.get('get?label=' + l + '&field=light', function(txt) { $('#inputLight').prop('checked', txt == '1'); });\n"
+        "   }\n"
+        "   loadSwitch();\n"
+        "   $('#selectLabel').change(loadSwitch);\n"
         "  </script>\n"
         " </body>\n"
         "</html>\n";
@@ -410,7 +435,9 @@ void setup_webserver() {
             uint8_t family = arg[0] - 'A';
             uint8_t device = arg[1] - '1';
             if( family <= 3 && device <= 2 ) {
-                name = app_get_name(family<<4 | device);
+                name = request->arg("field").equals("light")
+                    ? (app_is_light(family<<4 | device) ? "1" : "0")
+                    : app_get_name(family<<4 | device);
             }
         }
         request->send(200, "text/plain", name);
@@ -420,6 +447,7 @@ void setup_webserver() {
     web_server.on("/set", HTTP_POST, [](AsyncWebServerRequest *request) {
         const char *label = NULL;
         const char *name = NULL;
+        bool is_light = false;  // checkbox: only sent when checked
         for( size_t i=0; i < request->params(); ++i) {
             // snprintf(web_msg, sizeof(web_msg), "p[%i:%s]=%s", i, request->getParam(i)->name().c_str(), request->getParam(i)->value().c_str());
             // slog(web_msg, LOG_INFO);
@@ -428,6 +456,8 @@ void setup_webserver() {
                 label = request->getParam(i)->value().c_str();
             } else if (request->getParam(i)->name().equals("name")) {
                 name = request->getParam(i)->value().c_str();
+            } else if (request->getParam(i)->name().equals("light")) {
+                is_light = true;
             }
         }
         if (label && name && strlen(label) == 2) {
@@ -440,6 +470,7 @@ void setup_webserver() {
                 else {
                     app_name(family<<4 | device, name);
                 }
+                app_light(family<<4 | device, is_light);
                 discovery_due = true;
             }
         }
@@ -862,7 +893,7 @@ void setup() {
 
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);
     mqtt.setCallback(mqtt_callback);
-    mqtt.setBufferSize(768);  // discovery configs are ~550 bytes, PubSubClient defaults to 256
+    mqtt.setBufferSize(1024);  // discovery configs are ~750 bytes, PubSubClient defaults to 256
 
 #ifdef ESP32
     print_reset_reason(0);
