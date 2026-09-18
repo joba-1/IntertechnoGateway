@@ -169,6 +169,21 @@ bool handle_wifi() {
 
 char web_msg[80] = "";  // main web page displays and then clears this
 
+// HTML-escape user text, cut after max bytes without splitting a UTF-8 character
+String html_escape( const char *s, size_t max ) {
+    String out;
+    for (size_t n = 0; *s && (n < max || ((uint8_t)*s & 0xC0) == 0x80); s++, n++) {
+        switch (*s) {
+            case '&': out += "&amp;"; break;
+            case '<': out += "&lt;"; break;
+            case '>': out += "&gt;"; break;
+            case '"': out += "&quot;"; break;
+            default: out += *s;
+        }
+    }
+    return out;
+}
+
 // Standard web page
 const char *main_page() {
     static const char option_fmt[] = "           <option value=\"%s\">%s</option>\n";
@@ -334,19 +349,25 @@ const char *main_page() {
         "    </button>\n"
         "   </div>\n";
 
-    static char option[sizeof(option_fmt) + 2];
-    static char label[sizeof(label_fmt) + sizeof(option) * 4 * 3];
+    static char label[sizeof(label_fmt) + 3 * (sizeof(option_fmt) + 8 + 6 * 64)];
     static char alert[sizeof(alert_fmt) + sizeof(web_msg)];
     static char page[sizeof(page_fmt) + sizeof(label) + sizeof(alert) + 100];
     static char curr_time[30];
 
+    // only the switches of the selected family, each with its current name
+    uint8_t selected = app_get_addr() >> 4;
     String options;
-    for (uint8_t family=0; family<=3; ++family) {
-        for (uint8_t device=0; device<=2; ++device) {
-            char label[3] = { (char)('A' + family), (char)('1' + device), '\0' };
-            snprintf(option, sizeof(option), option_fmt, label, label);
-            options += option;
+    for (uint8_t device=0; device<=2; ++device) {
+        char code[3] = { (char)('A' + selected), (char)('1' + device), '\0' };
+        const char *name = app_get_name(selected << 4 | device);
+        String text = code;
+        if (strcmp(name, code) != 0) {
+            text += " – ";
+            text += html_escape(name, 64);
         }
+        char option[sizeof(option_fmt) + 8 + 6 * 64];
+        snprintf(option, sizeof(option), option_fmt, code, text.c_str());
+        options += option;
     }
     snprintf(label, sizeof(label), label_fmt, options.c_str());
      
