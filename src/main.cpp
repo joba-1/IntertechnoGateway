@@ -383,47 +383,34 @@ void setup_webserver() {
         String arg = request->arg("button");
         if (!arg.isEmpty()) {
             bool button = true;
-            const char *payload;
             uint8_t addr = app_get_addr() & 0xf0;
             if (arg.equals("button-1-off")) {
-                payload = app_send_to(false, addr);
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(false, addr);
             }
             else if (arg.equals("button-1-on")) {
-                payload = app_send_to(true, addr); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(true, addr);
             }
             else if (arg.equals("button-2-off")) {
-                payload = app_send_to(false, addr | 1); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(false, addr | 1);
             }
             else if (arg.equals("button-2-on")) {
-                payload = app_send_to(true, addr | 1); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(true, addr | 1);
             }
             else if (arg.equals("button-3-off")) {
-                payload = app_send_to(false, addr | 2); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(false, addr | 2);
             }
             else if (arg.equals("button-3-on")) {
-                payload = app_send_to(true, addr | 2); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(true, addr | 2);
             }
             else if (arg.equals("button-x-off")) {
-                payload = app_send_to(false, addr); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
-                payload = app_send_to(false, addr | 1); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
-                payload = app_send_to(false, addr | 2); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(false, addr);
+                app_request(false, addr | 1);
+                app_request(false, addr | 2);
             }
             else if (arg.equals("button-x-on")) {
-                payload = app_send_to(true, addr); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
-                payload = app_send_to(true, addr | 1); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
-                payload = app_send_to(true, addr | 2); 
-                mqtt.publish(MQTT_TOPIC "/change", payload);
+                app_request(true, addr);
+                app_request(true, addr | 1);
+                app_request(true, addr | 2);
             }
             else if (arg.equals("button-a")) {
                 app_addr(0x00); 
@@ -644,50 +631,16 @@ void print_reset_reason(int core) {
 // Called on incoming mqtt messages
 void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
-    typedef struct cmd { const char *name; void (*action)(void); } cmd_t;
-    
-    static cmd_t cmds[] = { 
-        { "000", [](){ app_send_to(false, 0x00); } },
-        { "001", [](){ app_send_to(true,  0x00); } },
-        { "010", [](){ app_send_to(false, 0x01); } },
-        { "011", [](){ app_send_to(true,  0x01); } },
-        { "020", [](){ app_send_to(false, 0x02); } },
-        { "021", [](){ app_send_to(true,  0x02); } },
-
-        { "100", [](){ app_send_to(false, 0x10); } },
-        { "101", [](){ app_send_to(true,  0x10); } },
-        { "110", [](){ app_send_to(false, 0x11); } },
-        { "111", [](){ app_send_to(true,  0x11); } },
-        { "120", [](){ app_send_to(false, 0x12); } },
-        { "121", [](){ app_send_to(true,  0x12); } },
-
-        { "200", [](){ app_send_to(false, 0x20); } },
-        { "201", [](){ app_send_to(true,  0x20); } },
-        { "210", [](){ app_send_to(false, 0x21); } },
-        { "211", [](){ app_send_to(true,  0x21); } },
-        { "220", [](){ app_send_to(false, 0x22); } },
-        { "221", [](){ app_send_to(true,  0x22); } },
-
-        { "300", [](){ app_send_to(false, 0x30); } },
-        { "301", [](){ app_send_to(true,  0x30); } },
-        { "310", [](){ app_send_to(false, 0x31); } },
-        { "311", [](){ app_send_to(true,  0x31); } },
-        { "320", [](){ app_send_to(false, 0x32); } },
-        { "321", [](){ app_send_to(true,  0x32); } }
-    };
-
-    if (strcasecmp(MQTT_TOPIC "/cmd", topic) == 0) {
-        for (auto &cmd: cmds) {
-            if (strncasecmp(cmd.name, (char *)payload, length) == 0) {
-                char code[4] ={0};
-                memcpy(code, payload, min(sizeof(code) - 1, length));
-                snprintf(msg, sizeof(msg), "Execute mqtt command '%s'", cmd.name);
-                slog(msg, LOG_INFO);
-                (*cmd.action)();
-                mqtt.publish(MQTT_TOPIC "/change", code);
-                return;
-            }
-        }
+    // payload is exactly 3 digits: family 0-3, device 0-2, off/on 0-1 (e.g. "201" = C1 on)
+    if (strcasecmp(MQTT_TOPIC "/cmd", topic) == 0 && length == 3
+        && payload[0] >= '0' && payload[0] <= '3'
+        && payload[1] >= '0' && payload[1] <= '2'
+        && (payload[2] == '0' || payload[2] == '1')) {
+        uint8_t addr = ((payload[0] - '0') << 4) | (payload[1] - '0');
+        app_request(payload[2] == '1', addr);
+        snprintf(msg, sizeof(msg), "Queue mqtt command '%.3s'", (char *)payload);
+        slog(msg, LOG_INFO);
+        return;
     }
 
     snprintf(msg, sizeof(msg), "Ignore mqtt %s: '%.*s'", topic, length, (char *)payload);
@@ -700,7 +653,10 @@ bool handle_mqtt( bool time_valid ) {
     static uint32_t prev = -interval;      // first connect attempt without delay
 
     if (mqtt.connected()) {
-        mqtt.loop();
+        // mqtt.loop() reads one message per call: drain them all, so a burst of commands
+        // collapses to the latest one per switch before loop() sends anything
+        for (uint8_t i = 0; i < 20 && mqtt.loop() && wifiMqtt.available(); i++) {
+        }
         return true;
     }
 
@@ -820,6 +776,13 @@ void loop() {
 
     health &= handle_mqtt(have_time);
     health &= handle_wifi();
+
+    const char *sent = app_handle();
+    if (sent) {
+        publish(MQTT_TOPIC "/change", sent);
+        snprintf(msg, sizeof(msg), "Sent command '%s'", sent);
+        slog(msg, LOG_INFO);
+    }
 
     if (have_time && enabledBreathing) {
         health_led.interval(health ? health_ok_interval : health_err_interval);

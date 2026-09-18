@@ -4,6 +4,10 @@
 #define PIN_DATA 16
 #endif
 
+#ifndef TX_BURSTS
+#define TX_BURSTS 3
+#endif
+
 #include <app.h>
 
 
@@ -90,13 +94,71 @@ const char *app_send_to( bool on, uint8_t addr )
     uint8_t family = addr >> 4;
     uint8_t device = addr & 0x0f;
 
-    rf_tx_cmd(its, addr, on ? INTERTECHNO_CMD_ON : INTERTECHNO_CMD_OFF);
+    // Some code-wheel receivers (C1 here) reject the ON burst of rf_tx_cmd's 4 frames but accept it repeated
+    for (uint8_t burst = 0; burst < TX_BURSTS; burst++) {
+        rf_tx_cmd(its, addr, on ? INTERTECHNO_CMD_ON : INTERTECHNO_CMD_OFF);
+    }
 
     change[0] = '0' + family;
     change[1] = '0' + device;
     change[2] = on ? '1' : '0';
 
     return change;
+}
+
+
+#define FAMILIES 4
+#define DEVICES 3
+enum pending_t : int8_t { NONE = -1, OFF = 0, ON = 1 };
+static volatile pending_t pending[FAMILIES][DEVICES] = {
+    { NONE, NONE, NONE }, { NONE, NONE, NONE }, { NONE, NONE, NONE }, { NONE, NONE, NONE } };
+
+#ifdef ESP32
+static portMUX_TYPE pending_mux = portMUX_INITIALIZER_UNLOCKED;
+#define PENDING_LOCK()   portENTER_CRITICAL(&pending_mux)
+#define PENDING_UNLOCK() portEXIT_CRITICAL(&pending_mux)
+#else
+#define PENDING_LOCK()   noInterrupts()
+#define PENDING_UNLOCK() interrupts()
+#endif
+
+
+void app_request( bool on, uint8_t addr )
+{
+    uint8_t family = addr >> 4;
+    uint8_t device = addr & 0x0f;
+
+    if( family >= FAMILIES || device >= DEVICES ) {
+        return;
+    }
+
+    PENDING_LOCK();
+    pending[family][device] = on ? ON : OFF;
+    PENDING_UNLOCK();
+}
+
+
+const char *app_handle()
+{
+    static uint8_t next = 0;  // round robin start slot
+
+    for (uint8_t i = 0; i < FAMILIES * DEVICES; i++) {
+        uint8_t slot = (next + i) % (FAMILIES * DEVICES);
+        uint8_t family = slot / DEVICES;
+        uint8_t device = slot % DEVICES;
+
+        PENDING_LOCK();
+        pending_t cmd = pending[family][device];
+        pending[family][device] = NONE;
+        PENDING_UNLOCK();
+
+        if (cmd != NONE) {
+            next = (slot + 1) % (FAMILIES * DEVICES);
+            return app_send_to(cmd == ON, (family << 4) | device);
+        }
+    }
+
+    return nullptr;
 }
 
 
