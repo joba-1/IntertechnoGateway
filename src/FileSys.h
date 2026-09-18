@@ -11,6 +11,9 @@ class FileSys {
         // Mount filesystem and read /boot.msg
         bool begin( bool formatOnFail = false );
 
+        // Unmount, e.g. before the partition is overwritten by an update
+        void end();
+
         // Use this object anywhere a fs::FS object can be used
         operator fs::FS&();
 

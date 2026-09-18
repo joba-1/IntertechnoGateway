@@ -14,8 +14,16 @@ FileSys::FileSys() :
 #endif
 {}
 
-FileSys::operator fs::FS &() { 
-    return _fs; 
+FileSys::operator fs::FS &() {
+    return _fs;
+}
+
+void FileSys::end() {
+#ifdef USE_SPIFFS
+    SPIFFS.end();
+#else
+    LittleFS.end();
+#endif
 }
 
 bool FileSys::begin( bool formatOnFail ) {

@@ -130,25 +130,12 @@ const char *main_page() {
     static const char option_fmt[] = "           <option value=\"%s\">%s</option>\n";
     static const char label_fmt[] = 
         "       <form action=\"/set\" method=\"post\" enctype=\"multipart/form-data\">\n"
-        "        <div class=\"row my-4\">\n"
-        "         <div class=\"col-1\">\n"
-        "          <label for=\"selectLabel\" class=\"col-form-label\">Label</label>\n"
-        "         </div>\n"
-        "         <div class=\"col-3\">\n"
-        "          <select id=\"selectLabel\" name=\"label\" class=\"form-select\">\n"
+        "        <div class=\"input-group\">\n"
+        "         <select id=\"selectLabel\" name=\"label\" class=\"form-select\" style=\"max-width: 6rem\" aria-label=\"Switch\">\n"
         "%s"
-        "          </select>\n"
-        "         </div>\n"
-        "         <div class=\"col-1\">\n"
-        "          <label for=\"inputName\" class=\"col-form-label\">Name</label>\n"
-        "         </div>\n"
-        "         <div class=\"col-4\">\n"
-        "          <input type=\"text\" id=\"inputName\" name=\"name\" class=\"form-control\">\n"
-        "         </div>\n"
-        "         <div class=\"col-2\">\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"name\">Set</button>\n"
-        "         </div>\n"
-        "         <div class=\"col-1\" mr-auto></div>\n"
+        "         </select>\n"
+        "         <input type=\"text\" id=\"inputName\" name=\"name\" class=\"form-control\" placeholder=\"Name shown on this page\" aria-label=\"Name\">\n"
+        "         <button class=\"btn btn-primary\" type=\"submit\" name=\"button\" value=\"name\">Set</button>\n"
         "        </div>\n"
         "       </form>\n";
     static const char page_fmt[] =
@@ -161,6 +148,21 @@ const char *main_page() {
         ICON_LINKS_HTML
         "  <link href=\"bootstrap.min.css\" rel=\"stylesheet\">\n"
         "  <title>" PROGNAME " v" VERSION "</title>\n"
+        "  <script>\n"
+        "   // dark from civil dusk to civil dawn (sun 6 deg below the horizon) near Stuttgart, +-20 min, browser clock\n"
+        "   function isNight(d) {\n"
+        "    var lat = 48.8 * Math.PI / 180, lon = 9.1, rad = Math.PI / 180;\n"
+        "    var day = (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 0)) / 864e5;\n"
+        "    var decl = -23.44 * Math.cos(2 * Math.PI * (day + 10) / 365) * rad;\n"
+        "    var cosH = (Math.sin(-6 * rad) - Math.sin(lat) * Math.sin(decl)) / (Math.cos(lat) * Math.cos(decl));\n"
+        "    var half = Math.acos(Math.max(-1, Math.min(1, cosH))) * 12 / Math.PI;\n"
+        "    var noon = 12 - lon / 15, utc = d.getUTCHours() + d.getUTCMinutes() / 60;\n"
+        "    return utc < noon - half || utc > noon + half;\n"
+        "   }\n"
+        "   function theme() { document.documentElement.setAttribute('data-bs-theme', isNight(new Date()) ? 'dark' : 'light'); }\n"
+        "   theme();\n"
+        "   setInterval(theme, 60000);\n"
+        "  </script>\n"
         " </head>\n"
         " <body>\n"
         "  <div class=\"container\">\n"
@@ -171,97 +173,70 @@ const char *main_page() {
         "     </div>\n"
         "    </div>\n"
         "    <div class=\"row my-3 align-items-center\">\n"
-        "     <div class=\"col-2 text-end\"><span id=\"state-1\" class=\"badge text-bg-light\">?</span></div>\n"
+        "     <div class=\"col-2 text-end\"><span id=\"state-1\" class=\"badge border bg-body-secondary text-body-secondary\">?</span></div>\n"
         "     <div class=\"col-4\">%s</div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-1-on\" data-dev=\"1\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-1-off\" data-dev=\"1\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
         "    <div class=\"row my-3 align-items-center\">\n"
-        "     <div class=\"col-2 text-end\"><span id=\"state-2\" class=\"badge text-bg-light\">?</span></div>\n"
+        "     <div class=\"col-2 text-end\"><span id=\"state-2\" class=\"badge border bg-body-secondary text-body-secondary\">?</span></div>\n"
         "     <div class=\"col-4\">%s</div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-2-on\" data-dev=\"2\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-2-off\" data-dev=\"2\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
         "    <div class=\"row my-3 align-items-center\">\n"
-        "     <div class=\"col-2 text-end\"><span id=\"state-3\" class=\"badge text-bg-light\">?</span></div>\n"
+        "     <div class=\"col-2 text-end\"><span id=\"state-3\" class=\"badge border bg-body-secondary text-body-secondary\">?</span></div>\n"
         "     <div class=\"col-4\">%s</div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-3-on\" data-dev=\"3\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-3-off\" data-dev=\"3\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
         "    <div class=\"row my-3 align-items-center\">\n"
-        "     <div class=\"col-2 text-end\"><span id=\"state-x\" class=\"badge text-bg-light\">&nbsp;</span></div>\n"
+        "     <div class=\"col-2 text-end\"></div>\n"
         "     <div class=\"col-4\">All %c</div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-x-on\" data-dev=\"x\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
         "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-x-off\" data-dev=\"x\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
         "   </form>\n"
-        "   <div class=\"accordion\" id=\"infos\">\n"
+        "   <div class=\"accordion my-4\" id=\"infos\">\n"
         "    <div class=\"accordion-item\">\n"
         "     <h2 class=\"accordion-header\" id=\"heading1\">\n"
-        "      <button class=\"accordion-button\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#infos1\" aria-expanded=\"true\" aria-controls=\"infos1\">\n"
+        "      <button class=\"accordion-button collapsed\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#infos1\" aria-expanded=\"false\" aria-controls=\"infos1\">\n"
         "       Configuration\n"
         "      </button>\n"
         "     </h2>\n"
         "     <div id=\"infos1\" class=\"accordion-collapse collapse\" aria-labelledby=\"heading1\" data-bs-parent=\"#infos\">\n"
         "      <div class=\"accordion-body\">\n"
-        "       <form action=\"/change\" method=\"post\" enctype=\"multipart/form-data\">\n"
-        "        <div class=\"row\">\n"
-        "         <div class=\"col-3\" mr-auto>Family</div>\n"
-        "         <div class=\"col-2\" mr-auto>\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-a\">A</button>\n"
-        "         </div>\n"
-        "         <div class=\"col-2\" mr-auto>\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-b\">B</button>\n"
-        "         </div>\n"
-        "         <div class=\"col-2\" mr-auto>\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-c\">C</button>\n"
-        "         </div>\n"
-        "         <div class=\"col-2\" mr-auto>\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-d\">D</button>\n"
-        "         </div>\n"
-        "         <div class=\"col-1\" mr-auto>\n"
+        "       <h6 class=\"text-body-secondary\">Family</h6>\n"
+        "       <form action=\"/change\" method=\"post\" enctype=\"multipart/form-data\" class=\"mb-4\">\n"
+        "        <div class=\"btn-group w-100\" role=\"group\" aria-label=\"Family\" id=\"families\">\n"
+        "         <button class=\"btn btn-outline-primary\" type=\"submit\" name=\"button\" value=\"button-a\">A</button>\n"
+        "         <button class=\"btn btn-outline-primary\" type=\"submit\" name=\"button\" value=\"button-b\">B</button>\n"
+        "         <button class=\"btn btn-outline-primary\" type=\"submit\" name=\"button\" value=\"button-c\">C</button>\n"
+        "         <button class=\"btn btn-outline-primary\" type=\"submit\" name=\"button\" value=\"button-d\">D</button>\n"
         "        </div>\n"
         "       </form>\n"
+        "       <h6 class=\"text-body-secondary\">Switch names</h6>\n"
+        "       <div class=\"mb-4\">\n"
         "%s"
-        "       <div class=\"row\">\n"
-        "        <div class=\"col\"><label for=\"update\">Post firmware image to</label></div>\n"
-        "        <div class=\"col\" id=\"update\"><a href=\"/update\">/update</a></div>\n"
         "       </div>\n"
-        "       <div class=\"row\">\n"
-        "        <div class=\"col\"><label for=\"start\">Last start time</label></div>\n"
-        "        <div class=\"col\" id=\"start\">%s</div>\n"
-        "       </div>\n"
-        "       <div class=\"row\">\n"
-        "        <div class=\"col\"><label for=\"web\">Last web update</label></div>\n"
-        "        <div class=\"col\" id=\"web\">%s</div>\n"
-        "       </div>\n"
-        "       <div class=\"row mt-4\">\n"
-        "        <div class=\"col\">\n"
-        "         <form action=\"breathe\" method=\"post\">\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"breathe\">Toggle Breath</button>\n"
-        "         </form>\n"
-        "        </div>\n"
-        "        <div class=\"col\">\n"
-        "         <form action=\"wipe\" method=\"post\">\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"wipe\">Wipe WLAN</button>\n"
-        "         </form>\n"
-        "        </div>\n"
-        "        <div class=\"col\">\n"
-        "         <form action=\"reset\" method=\"post\">\n"
-        "          <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"reset\">Reset ESP</button>\n"
-        "         </form>\n"
-        "        </div>\n"
+        "       <h6 class=\"text-body-secondary\">Device</h6>\n"
+        "       <table class=\"table table-sm mb-4\">\n"
+        "        <tbody>\n"
+        "         <tr><td class=\"text-body-secondary\">Firmware or filesystem update</td><td><a href=\"/update\">/update</a></td></tr>\n"
+        "         <tr><td class=\"text-body-secondary\">Last start</td><td>%s</td></tr>\n"
+        "         <tr><td class=\"text-body-secondary\">Page loaded</td><td>%s</td></tr>\n"
+        "        </tbody>\n"
+        "       </table>\n"
+        "       <div class=\"d-flex flex-wrap gap-2\">\n"
+        "        <form action=\"breathe\" method=\"post\"><button class=\"btn btn-outline-secondary\" type=\"submit\" name=\"button\" value=\"breathe\">Toggle LED breathing</button></form>\n"
+        "        <form action=\"wipe\" method=\"post\" onsubmit=\"return confirm('Forget the WLAN credentials? The gateway then opens its own access point for setup.')\"><button class=\"btn btn-outline-warning\" type=\"submit\" name=\"button\" value=\"wipe\">Wipe WLAN</button></form>\n"
+        "        <form action=\"reset\" method=\"post\" onsubmit=\"return confirm('Restart the gateway?')\"><button class=\"btn btn-outline-danger\" type=\"submit\" name=\"button\" value=\"reset\">Reset ESP</button></form>\n"
         "       </div>\n"
         "      </div>\n"
         "     </div>\n"
         "    </div>\n"
         "   </div>\n"
-        "   <div class=\"alert alert-primary alert-dismissible fade show\" role=\"alert\">\n"
-        "    <strong>Status</strong> %s\n"
-        "    <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\" aria-label=\"Close\">\n"
-        "     <span aria-hidden=\"true\"></span>\n"
-        "    </button>\n"
-        "   </div>\n"
+        "%s"
         "   <div class=\"row\"><small>... by <a href=\"https://github.com/joba-1\">Joachim Banzhaf</a>, " __DATE__ " " __TIME__ "</small></div>\n"
         "  </div>\n"
         "  <script src=\"jquery.min.js\"></script>\n"
@@ -277,9 +252,10 @@ const char *main_page() {
         "     on.find('.spinner-border').toggleClass('d-none', d.wanted != 1);\n"
         "     off.find('.spinner-border').toggleClass('d-none', d.wanted != 0);\n"
         "     $('#state-' + d.n).text(d.state == 1 ? 'on' : d.state == 0 ? 'off' : '?')\n"
-        "      .attr('class', 'badge ' + (d.state == 1 ? 'text-bg-success' : d.state == 0 ? 'text-bg-secondary' : 'text-bg-light'));\n"
+        "      .attr('class', 'badge ' + (d.state == 1 ? 'text-bg-success' : d.state == 0 ? 'text-bg-secondary' : 'border bg-body-secondary text-body-secondary'));\n"
         "     if (d.wanted >= 0) busy = true;\n"
         "    });\n"
+        "    $('#families button').removeClass('active').filter('[value=button-' + s.family.toLowerCase() + ']').addClass('active');\n"
         "    [0, 1].forEach(function(v) {\n"
         "     var any = s.devices.some(function(d) { return d.wanted == v; });\n"
         "     $('#switches [data-dev=x][data-on=' + v + '] .spinner-border').toggleClass('d-none', !any);\n"
@@ -306,9 +282,18 @@ const char *main_page() {
         " </body>\n"
         "</html>\n";
 
+    static const char alert_fmt[] =
+        "   <div class=\"alert alert-primary alert-dismissible fade show\" role=\"alert\">\n"
+        "    <strong>Status</strong> %s\n"
+        "    <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\" aria-label=\"Close\">\n"
+        "     <span aria-hidden=\"true\"></span>\n"
+        "    </button>\n"
+        "   </div>\n";
+
     static char option[sizeof(option_fmt) + 2];
     static char label[sizeof(label_fmt) + sizeof(option) * 4 * 3];
-    static char page[sizeof(page_fmt) + sizeof(label) + sizeof(web_msg) + 100];
+    static char alert[sizeof(alert_fmt) + sizeof(web_msg)];
+    static char page[sizeof(page_fmt) + sizeof(label) + sizeof(alert) + 100];
     static char curr_time[30];
 
     String options;
@@ -327,8 +312,16 @@ const char *main_page() {
 
     uint8_t family = app_get_addr() >> 4;
 
-    snprintf(page, sizeof(page), page_fmt, app_get_name(family<<4), app_get_name((family<<4) + 1), 
-        app_get_name((family<<4) + 2), 'A' + family, label, start_time, curr_time, web_msg);
+    // the status alert only appears when there is something to report (update result, 404, ...)
+    if (*web_msg) {
+        snprintf(alert, sizeof(alert), alert_fmt, web_msg);
+    }
+    else {
+        *alert = '\0';
+    }
+
+    snprintf(page, sizeof(page), page_fmt, app_get_name(family<<4), app_get_name((family<<4) + 1),
+        app_get_name((family<<4) + 2), 'A' + family, label, start_time, curr_time, alert);
 
     *web_msg = '\0';
 
@@ -559,8 +552,23 @@ void setup_webserver() {
         request->send(response);
     },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
         if(!index){
-            Serial.printf("Update Start: %s\n", filename.c_str());
-            if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+            // pio uploadfs sends spiffs.bin/littlefs.bin; ?fs=1 forces a filesystem update for any file name
+            bool is_fs = filename.indexOf("spiffs") >= 0 || filename.indexOf("littlefs") >= 0 || request->hasParam("fs");
+            Serial.printf("Update Start: %s (%s)\n", filename.c_str(), is_fs ? "filesystem" : "firmware");
+            bool started;
+            if (is_fs) {
+#ifdef ESP32
+                fileSys.end();
+                started = Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS);
+#else
+                started = false;
+                snprintf(web_msg, sizeof(web_msg), "Filesystem update not supported on this board");
+#endif
+            }
+            else {
+                started = Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000);
+            }
+            if(!started){
                 Update.printError(Serial);
 #ifdef ESP32
                 const char *msg = Update.errorString();
