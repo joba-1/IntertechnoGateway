@@ -88,6 +88,50 @@ void publish( const char *topic, const char *payload ) {
 }
 
 
+volatile bool discovery_due = true;  // (re)announce the switches to Home Assistant from loop()
+
+// Home Assistant MQTT discovery: one retained config per switch, with the unique_ids of the former YAML entries.
+// No "device" block on purpose: with one, HA prefixes every friendly name with the device name.
+void publish_discovery() {
+    char topic[48];
+    char name[128];
+    char json[640];
+
+    for (uint8_t family = 0; family <= 3; family++) {
+        for (uint8_t device = 0; device <= 2; device++) {
+            size_t n = 0;
+            for (const char *p = app_get_name(family << 4 | device); *p && n < sizeof(name) - 2; p++) {
+                if ((unsigned char)*p < 0x20) {
+                    continue;
+                }
+                if (*p == '"' || *p == '\\') {
+                    name[n++] = '\\';
+                }
+                name[n++] = *p;
+            }
+            name[n] = '\0';
+
+            char id = 'a' + family;
+            int code_f = family, code_d = device;
+            snprintf(topic, sizeof(topic), "homeassistant/switch/itgw_%c%d/config", id, device + 1);
+            snprintf(json, sizeof(json),
+                "{\"name\":\"%s\",\"unique_id\":\"itgw_%c%d\","
+                "\"command_topic\":\"" MQTT_TOPIC "/cmd\",\"payload_on\":\"%d%d1\",\"payload_off\":\"%d%d0\","
+                "\"state_topic\":\"" MQTT_TOPIC "/change\",\"state_on\":\"%d%d1\",\"state_off\":\"%d%d0\","
+                "\"availability_topic\":\"" MQTT_TOPIC "/LWT\",\"payload_available\":\"Online\",\"payload_not_available\":\"Offline\"}",
+                name, id, device + 1, code_f, code_d, code_f, code_d, code_f, code_d, code_f, code_d);
+            if (!mqtt.publish(topic, json, true)) {
+                slog("Home Assistant discovery publish failed", LOG_ERR);
+                return;
+            }
+        }
+    }
+
+    discovery_due = false;
+    slog("Published Home Assistant discovery", LOG_INFO);
+}
+
+
 // check and report RSSI and BSSID changes
 bool handle_wifi() {
     static const uint32_t reconnectInterval = 10000;  // try reconnect every 10s
@@ -375,6 +419,7 @@ void setup_webserver() {
                 else {
                     app_name(family<<4 | device, name);
                 }
+                discovery_due = true;
             }
         }
         request->redirect("/");
@@ -713,6 +758,7 @@ bool handle_mqtt( bool time_valid ) {
             && mqtt.subscribe(MQTT_TOPIC "/cmd")) {
             snprintf(msg, sizeof(msg), "Connected to MQTT broker %s:%d using topic %s", MQTT_SERVER, MQTT_PORT, MQTT_TOPIC);
             slog(msg, LOG_NOTICE);
+            discovery_due = true;
             return true;
         }
 
@@ -795,6 +841,7 @@ void setup() {
 
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);
     mqtt.setCallback(mqtt_callback);
+    mqtt.setBufferSize(768);  // discovery configs are ~550 bytes, PubSubClient defaults to 256
 
 #ifdef ESP32
     print_reset_reason(0);
@@ -817,6 +864,10 @@ void loop() {
 
     health &= handle_mqtt(have_time);
     health &= handle_wifi();
+
+    if (discovery_due && mqtt.connected()) {
+        publish_discovery();
+    }
 
     const char *sent = app_handle();
     if (sent) {
