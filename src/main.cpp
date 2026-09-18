@@ -164,55 +164,35 @@ const char *main_page() {
         " </head>\n"
         " <body>\n"
         "  <div class=\"container\">\n"
-        "   <form action=\"/change\" method=\"post\" enctype=\"multipart/form-data\">\n"
+        "   <form id=\"switches\" action=\"/change\" method=\"post\" enctype=\"multipart/form-data\">\n"
         "    <div class=\"row\">\n"
         "     <div class=\"col-12\">\n"
         "      <h1>" PROGNAME " v" VERSION "</h1>\n"
         "     </div>\n"
         "    </div>\n"
-        "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-2\" mr-auto></div>\n"
-        "     <div class=\"col-3\" mr-auto>%s</div>\n"
-        "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-1-on\">On</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-1-off\">Off</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
+        "    <div class=\"row my-3 align-items-center\">\n"
+        "     <div class=\"col-2 text-end\"><span id=\"state-1\" class=\"badge text-bg-light\">?</span></div>\n"
+        "     <div class=\"col-4\">%s</div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-1-on\" data-dev=\"1\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-1-off\" data-dev=\"1\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
-        "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-2\" mr-auto></div>\n"
-        "     <div class=\"col-3\" mr-auto>%s</div>\n"
-        "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-2-on\">On</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-2-off\">Off</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
+        "    <div class=\"row my-3 align-items-center\">\n"
+        "     <div class=\"col-2 text-end\"><span id=\"state-2\" class=\"badge text-bg-light\">?</span></div>\n"
+        "     <div class=\"col-4\">%s</div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-2-on\" data-dev=\"2\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-2-off\" data-dev=\"2\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
-        "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-2\" mr-auto></div>\n"
-        "     <div class=\"col-3\" mr-auto>%s</div>\n"
-        "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-3-on\">On</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-3\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-3-off\">Off</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
+        "    <div class=\"row my-3 align-items-center\">\n"
+        "     <div class=\"col-2 text-end\"><span id=\"state-3\" class=\"badge text-bg-light\">?</span></div>\n"
+        "     <div class=\"col-4\">%s</div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-3-on\" data-dev=\"3\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-3-off\" data-dev=\"3\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
-        "    <div class=\"row my-4\">\n"
-        "     <div class=\"col-2\" mr-auto></div>\n"
-        "     <div class=\"col-3\" mr-auto>All %c</div>\n"
-        "     <div class=\"col-2\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-x-on\">On</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-3\" mr-auto>\n"
-        "      <button class=\"btn btn-primary\" button type=\"submit\" name=\"button\" value=\"button-x-off\">Off</button>\n"
-        "     </div>\n"
-        "     <div class=\"col-3\" mr-auto></div>\n"
+        "    <div class=\"row my-3 align-items-center\">\n"
+        "     <div class=\"col-2 text-end\"><span id=\"state-x\" class=\"badge text-bg-light\">&nbsp;</span></div>\n"
+        "     <div class=\"col-4\">All %c</div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-success w-100\" type=\"submit\" name=\"button\" value=\"button-x-on\" data-dev=\"x\" data-on=\"1\"><span class=\"spinner-border spinner-border-sm d-none\"></span> On</button></div>\n"
+        "     <div class=\"col-3\"><button class=\"btn btn-outline-secondary w-100\" type=\"submit\" name=\"button\" value=\"button-x-off\" data-dev=\"x\" data-on=\"0\"><span class=\"spinner-border spinner-border-sm d-none\"></span> Off</button></div>\n"
         "    </div>\n"
         "   </form>\n"
         "   <div class=\"accordion\" id=\"infos\">\n"
@@ -287,6 +267,37 @@ const char *main_page() {
         "  <script src=\"jquery.min.js\"></script>\n"
         "  <script src=\"bootstrap.bundle.min.js\"></script>\n"
         "  <script>\n"
+        "   var busy = false, timer;\n"
+        "   function paint(s) {\n"
+        "    busy = false;\n"
+        "    s.devices.forEach(function(d) {\n"
+        "     var on = $('#switches [data-dev=' + d.n + '][data-on=1]'), off = $('#switches [data-dev=' + d.n + '][data-on=0]');\n"
+        "     on.toggleClass('btn-success', d.state == 1).toggleClass('btn-outline-success', d.state != 1);\n"
+        "     off.toggleClass('btn-secondary', d.state == 0).toggleClass('btn-outline-secondary', d.state != 0);\n"
+        "     on.find('.spinner-border').toggleClass('d-none', d.wanted != 1);\n"
+        "     off.find('.spinner-border').toggleClass('d-none', d.wanted != 0);\n"
+        "     $('#state-' + d.n).text(d.state == 1 ? 'on' : d.state == 0 ? 'off' : '?')\n"
+        "      .attr('class', 'badge ' + (d.state == 1 ? 'text-bg-success' : d.state == 0 ? 'text-bg-secondary' : 'text-bg-light'));\n"
+        "     if (d.wanted >= 0) busy = true;\n"
+        "    });\n"
+        "    [0, 1].forEach(function(v) {\n"
+        "     var any = s.devices.some(function(d) { return d.wanted == v; });\n"
+        "     $('#switches [data-dev=x][data-on=' + v + '] .spinner-border').toggleClass('d-none', !any);\n"
+        "    });\n"
+        "   }\n"
+        "   function poll() {\n"
+        "    clearTimeout(timer);\n"
+        "    $.getJSON('state', paint).always(function() { timer = setTimeout(poll, busy ? 400 : 3000); });\n"
+        "   }\n"
+        "   $('#switches button').on('click', function(e) {\n"
+        "    e.preventDefault();\n"
+        "    var b = $(this), on = b.data('on');\n"
+        "    var targets = b.data('dev') == 'x' ? $('#switches [data-on=' + on + ']') : b;\n"
+        "    targets.find('.spinner-border').removeClass('d-none');\n"
+        "    busy = true;\n"
+        "    $.post('change', { button: b.val(), ajax: 1 }).always(poll);\n"
+        "   });\n"
+        "   poll();\n"
         "   $.get('get?label=' + $('#selectLabel').val(), function(txt){$('#inputName').val(txt)});\n"
         "   $('#selectLabel').change(function() {\n"
         "    $.get('get?label=' + $(this).val(), function(txt){$('#inputName').val(txt)});\n"
@@ -381,8 +392,9 @@ void setup_webserver() {
         uint16_t prio = LOG_INFO;
 
         String arg = request->arg("button");
+        bool button = false;
         if (!arg.isEmpty()) {
-            bool button = true;
+            button = true;
             uint8_t addr = app_get_addr() & 0xf0;
             if (arg.equals("button-1-off")) {
                 app_request(false, addr);
@@ -427,12 +439,33 @@ void setup_webserver() {
             else {
                 button = false;
             }
-            if( button ) { 
-                snprintf(web_msg, sizeof(web_msg), "Button '%s' pressed", arg.c_str());
-                slog(web_msg, prio);
+            if( button ) {
+                char line[80];  // not the global msg: this runs in the AsyncTCP task, concurrent to loop()
+                snprintf(line, sizeof(line), "Button '%s' pressed", arg.c_str());
+                slog(line, prio);
             }
-            request->redirect("/");  
         }
+        if (request->hasArg("ajax")) {
+            request->send(button ? 204 : 400);
+        }
+        else {
+            request->redirect("/");
+        }
+    });
+
+    // state of the switches of the selected family for the page script
+    web_server.on("/state", HTTP_GET, [](AsyncWebServerRequest *request) {
+        uint8_t family = app_get_addr() & 0xf0;
+        char json[160];
+        int len = snprintf(json, sizeof(json), "{\"family\":\"%c\",\"devices\":[", 'A' + (family >> 4));
+        for (uint8_t device = 0; device < 3; device++) {
+            int8_t wanted, state;
+            app_get_state(family | device, &wanted, &state);
+            len += snprintf(json + len, sizeof(json) - len, "%s{\"n\":%u,\"wanted\":%d,\"state\":%d}",
+                device ? "," : "", device + 1, wanted, state);
+        }
+        snprintf(json + len, sizeof(json) - len, "]}");
+        request->send(200, "application/json", json);
     });
 
     // Call this page to reset the ESP

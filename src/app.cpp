@@ -112,6 +112,12 @@ const char *app_send_to( bool on, uint8_t addr )
 enum pending_t : int8_t { NONE = -1, OFF = 0, ON = 1 };
 static volatile pending_t pending[FAMILIES][DEVICES] = {
     { NONE, NONE, NONE }, { NONE, NONE, NONE }, { NONE, NONE, NONE }, { NONE, NONE, NONE } };
+// last command actually transmitted (NONE = unknown since boot)
+static volatile pending_t sent[FAMILIES][DEVICES] = {
+    { NONE, NONE, NONE }, { NONE, NONE, NONE }, { NONE, NONE, NONE }, { NONE, NONE, NONE } };
+// command currently being transmitted: its slot is already cleared from pending
+static volatile int8_t inflight_slot = -1;
+static volatile pending_t inflight_cmd = NONE;
 
 #ifdef ESP32
 static portMUX_TYPE pending_mux = portMUX_INITIALIZER_UNLOCKED;
@@ -150,15 +156,45 @@ const char *app_handle()
         PENDING_LOCK();
         pending_t cmd = pending[family][device];
         pending[family][device] = NONE;
+        if (cmd != NONE) {
+            inflight_slot = slot;
+            inflight_cmd = cmd;
+        }
         PENDING_UNLOCK();
 
         if (cmd != NONE) {
             next = (slot + 1) % (FAMILIES * DEVICES);
-            return app_send_to(cmd == ON, (family << 4) | device);
+            const char *code = app_send_to(cmd == ON, (family << 4) | device);
+            PENDING_LOCK();
+            sent[family][device] = cmd;
+            inflight_slot = -1;
+            PENDING_UNLOCK();
+            return code;
         }
     }
 
     return nullptr;
+}
+
+
+void app_get_state( uint8_t addr, int8_t *wanted, int8_t *state )
+{
+    uint8_t family = addr >> 4;
+    uint8_t device = addr & 0x0f;
+
+    *wanted = NONE;
+    *state = NONE;
+    if( family >= FAMILIES || device >= DEVICES ) {
+        return;
+    }
+
+    PENDING_LOCK();
+    *wanted = pending[family][device];
+    if (*wanted == NONE && inflight_slot == family * DEVICES + device) {
+        *wanted = inflight_cmd;
+    }
+    *state = sent[family][device];
+    PENDING_UNLOCK();
 }
 
 

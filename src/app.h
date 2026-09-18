@@ -20,3 +20,5 @@ const char *app_send_to( bool on, uint8_t addr );
 void app_request( bool on, uint8_t addr );
 // Call from loop(): sends at most one pending command (round robin), returns its change code or nullptr.
 const char *app_handle();
+// wanted: queued or in-flight command, state: last transmitted command; each -1 none, 0 off, 1 on
+void app_get_state( uint8_t addr, int8_t *wanted, int8_t *state );
